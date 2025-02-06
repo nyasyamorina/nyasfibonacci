@@ -11,6 +11,7 @@ use nyasfibonacci::*;
 static FIBONACCIS: &[(&str, fn(u64) -> UBig)] = &[
     ("recursion", recursion::fibonacci),
     ("iteration", iteration::fibonacci),
+    ("matrix_pow", matrix_pow::fibonacci::<ElementarySchoolMul>),
 ];
 
 #[derive(Debug)]

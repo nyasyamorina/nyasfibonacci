@@ -1,6 +1,6 @@
-mod helpers;
-
 use std::{cmp::min, fmt, ops::AddAssign, ptr};
+
+mod helpers;
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -77,7 +77,6 @@ impl AddAssign<&UBig> for UBig {
             }
         }
 
-
         use helpers::{addcarry, add1, Carry};
 
         fn add_into(lhs: &mut [u64], rhs: &[u64]) -> Carry {
@@ -94,9 +93,12 @@ impl AddAssign<&UBig> for UBig {
     }
 }
 
+pub mod mul;
+pub use mul::{UBigMul, ElementarySchoolMul};
 
 pub mod recursion;
 pub mod iteration;
+pub mod matrix_pow;
 
 
 #[cfg(test)]
@@ -105,11 +107,13 @@ mod test {
 
     #[test]
     fn it_works() {
-        let fib0 = recursion::fibonacci(37);
-        assert_eq!(fib0.data.len(), 1);
-        assert_eq!(fib0.data[0], 24157817u64);
+        let fib = recursion::fibonacci(37);
+        assert_eq!(fib.data.len(), 1);
+        assert_eq!(fib.data[0], 24157817u64);
 
-        let fib = iteration::fibonacci(37);
-        assert_eq!(fib, fib0);
+        assert_eq!(iteration::fibonacci(37), fib);
+
+        let fib = iteration::fibonacci(100_000);
+        assert_eq!(matrix_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
     }
 }

@@ -64,6 +64,7 @@ end
 methods = [
     "recursion",
     "iteration",
+    "matrix_pow",
 ]
 
 recursion_axis = 0:38
@@ -77,6 +78,13 @@ iteration_axis = 0:Δn:501Δn
 iteration_time = timing.(Ref("iteration"), iteration_axis)
 plot!(iteration_axis, iteration_time; label = "iteration")
 max_n = max(max_n, last(iteration_axis))
+
+target = find_target_timing("matrix_pow", 600_000, 900_000, 1.2)
+Δn = target ÷ 500
+matrix_pow_axis = 0:Δn:501Δn
+matrix_pow_time = timing.(Ref("matrix_pow"), matrix_pow_axis)
+plot!(matrix_pow_axis, matrix_pow_time; label = "matrix_pow")
+max_n = max(max_n, last(matrix_pow_axis))
 
 plot!([0, max_n], [1, 1]; c = :black, lw = 2, label = false)
 ylims!((0, 1.2))
