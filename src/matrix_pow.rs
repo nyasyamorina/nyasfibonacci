@@ -47,7 +47,7 @@ impl Matrix {
 }
 impl Matrix {
     /// self * rhs
-    fn mul<M: UBigMul>(&mut self, rhs: &mut Matrix) -> Matrix {
+    pub fn mul<M: UBigMul>(&mut self, rhs: &mut Matrix) -> Matrix {
         // tl = self.tl * rhs.tl + self.tr * rhs.bl
         let mut tl = M::mul(&mut self.tl, &mut rhs.tl);
         tl += &M::mul(&mut self.tr, &mut rhs.bl);
@@ -65,7 +65,7 @@ impl Matrix {
     }
 
     /// self^2
-    fn sqr<M: UBigMul>(mut self) -> Matrix {
+    pub fn sqr<M: UBigMul>(mut self) -> Matrix {
         let tmp = M::mul(&mut self.tr, &mut self.bl);
         // tl = self.tl^2 + self.tr * self.bl
         let mut tl = M::sqr(&mut self.tl);

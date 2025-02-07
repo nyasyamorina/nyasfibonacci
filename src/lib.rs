@@ -35,6 +35,21 @@ impl UBig {
         }
         self.data.truncate(len); // note this method will not realloc memory
     }
+
+    pub fn shl1(&mut self) {
+        if self.data.is_empty() {
+            return;
+        }
+
+        let mut carry = 0;
+        for x in &mut self.data {
+            (carry, *x) = (*x >> 63, (*x << 1) | carry);
+        }
+        if carry != 0 {
+            // carry overflow
+            self.data.push(1);
+        }
+    }
 }
 
 impl fmt::Display for UBig {
@@ -99,6 +114,7 @@ pub use mul::{UBigMul, ElementarySchoolMul};
 pub mod recursion;
 pub mod iteration;
 pub mod matrix_pow;
+pub mod small_matrix;
 
 
 #[cfg(test)]
