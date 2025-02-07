@@ -16,13 +16,12 @@ impl UBigMul for ElementarySchoolMul {
             return UBig::zero(); // everything mul by 0 is 0
         }
 
-        let (lhs, rhs) = (lhs.data.as_ptr(), rhs.data.as_ptr());
         // the out buffer and tmp buffer
         let mut vec = vec![0; (llen + rlen) + (llen + 1)];
         let out = vec.as_mut_ptr();
         let tmp = out.wrapping_add(llen + rlen);
 
-        unsafe { mul_ubig(lhs, llen, rhs, rlen, out, tmp); }
+        unsafe { mul_ubig(&lhs.data, &rhs.data, out, tmp); }
 
         vec.truncate(llen + rlen); // truncate the tmp buffer
         let mut res = UBig::from_vec(vec);
@@ -36,13 +35,12 @@ impl UBigMul for ElementarySchoolMul {
             return UBig::zero();
         }
 
-        let x = x.data.as_ptr();
         // the out buffer and tmp buffer
         let mut vec = vec![0; 3 * len + 1];
         let out = vec.as_mut_ptr();
         let tmp = out.wrapping_add(2 * len);
 
-        unsafe { mul_ubig(x, len, x, len, out, tmp); }
+        unsafe { mul_ubig(&x.data, &x.data, out, tmp); }
 
         vec.truncate(2 * len);
         let mut res = UBig::from_vec(vec);

@@ -1,3 +1,5 @@
+use std::ops::{BitOr, BitOrAssign};
+
 //================================    not x86_64    ================================//
 
 #[cfg(not(target_arch = "x86_64"))]
@@ -61,7 +63,7 @@ impl Carry {
         Carry(1)
     }
     #[inline(always)]
-    pub fn from(carry: u8) -> Carry {
+    pub unsafe fn from(carry: u8) -> Carry {
         Carry(carry)
     }
 
@@ -84,6 +86,19 @@ pub unsafe fn addcarry_u64(carry: Carry, lhs: u64, rhs: u64, out: &mut u64) -> C
 }
 
 //================================      common      ================================//
+
+impl BitOr<Carry> for Carry {
+    type Output = Carry;
+
+    fn bitor(self, rhs: Carry) -> Self::Output {
+        unsafe { Carry::from(self.0 | rhs.0) }
+    }
+}
+impl BitOrAssign<Carry> for Carry {
+    fn bitor_assign(&mut self, rhs: Carry) {
+        self.0 |= rhs.0;
+    }
+}
 
 
 #[inline]
@@ -143,35 +158,69 @@ pub fn mul_u64_no_u128(lhs: u64, rhs: u64) -> [u64; 2] {
     [low64, high64]
 }
 
-pub unsafe fn mul_ubig_u64(lhs: *const u64, rhs: u64, out: *mut u64, len: usize) {
+pub unsafe fn mul_ubig_u64(lhs: &[u64], rhs: u64, out: *mut u64) {
     //! # Safety
     //!
-    //! the length of lhs must be `len`, the length of `out` must be `len+1`.
+    //! the length of `out` must be `lhs.len()) + 1`.
     let mut carry = Carry::zero();
     let mut high64_from_lower = 0;
-    for index in 0..len {
-        let l = lhs.wrapping_add(index);
+    for index in 0..lhs.len() {
+        let l = lhs.get_unchecked(index);
         let o = out.wrapping_add(index);
         let [low64, high64] = mul_u64(*l, rhs);
         carry = addcarry_u64(carry, low64, high64_from_lower, &mut *o);
         high64_from_lower = high64;
     }
     // high64 from highest part
-    let o = out.wrapping_add(len);
+    let o = out.wrapping_add(lhs.len());
     carry = addcarry_u64(carry, 0, high64_from_lower, &mut *o);
     debug_assert!(!carry.has());
 }
 
-pub unsafe fn mul_ubig(lhs: *const u64, llen: usize, rhs: *const u64, rlen: usize, out: *mut u64, tmp: *mut u64) {
+pub unsafe fn mul_ubig(lhs: &[u64], rhs: &[u64], out: *mut u64, tmp: *mut u64) {
     //! # Safety
     //!
-    //! lhs.len() = llen, rhs.len() = rlen, out.len() = llen+rlen, tmp.len() = llen+1.
+    //! `out.len() = lhs.len() + rhs.len()` and `tmp.len() = lhs.len() + 1`.
     //! `out` must init with all 0s.
-    for index in 0..rlen {
-        let r = rhs.wrapping_add(index);
+    for index in 0..rhs.len() {
+        let r = rhs.get_unchecked(index);
         let o = out.wrapping_add(index);
-        mul_ubig_u64(lhs, *r, tmp, llen);
-        let carry = addcarry(Carry::zero(), o, tmp, o, llen + 1);
+        mul_ubig_u64(lhs, *r, tmp);
+        let carry = addcarry(Carry::zero(), o, tmp, o, lhs.len() + 1);
         debug_assert!(!carry.has());
     }
+}
+
+
+pub unsafe fn mul_ubig_u64_addto(lhs: &[u64], rhs: u64, mut out: *mut u64) -> Carry {
+    //! #Safety
+    //!
+    //! `out.len() = lhs.len() + 1`
+    let (mut c0, mut c1) = (Carry::zero(), Carry::zero());
+    for l in lhs {
+        let [low64, high64] = mul_u64(*l, rhs);
+        c0 = addcarry_u64(c0, *out, low64, &mut *out);
+        out = out.wrapping_add(1);
+        c0 = addcarry_u64(c0, *out, high64, &mut *out);
+        (c0, c1) = (c1, c0);
+    }
+    c0 = addcarry_u64(c0, *out, 0, &mut *out);
+    c0 | c1
+}
+
+#[allow(dead_code)]
+pub unsafe fn mul_ubig_addto(lhs: &[u64], rhs: &[u64], mut out: *mut u64) -> Carry {
+    //! #Safety
+    //!
+    //! `out.len() = lhs.len() + rhs.len()`
+    let mut end_carry = Carry::zero();
+    for r in rhs {
+        let last_end = out.wrapping_add(lhs.len());
+        end_carry = addcarry_u64(end_carry, *last_end, 0, &mut *last_end);
+
+        end_carry |= mul_ubig_u64_addto(lhs, *r, out);
+
+        out = out.wrapping_add(1);
+    }
+    end_carry
 }

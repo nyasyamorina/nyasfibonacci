@@ -74,7 +74,7 @@ recursion_time = timing.(Ref("recursion"), recursion_axis)
 plot(recursion_axis, recursion_time; label = "recursion")
 max_n = 38
 
-target = find_target_timing("iteration", 60_000, 90_000, 1.2)
+#= target = find_target_timing("iteration", 60_000, 90_000, 1.2)
 Δn = target ÷ 500
 iteration_axis = 0:Δn:501Δn
 iteration_time = timing.(Ref("iteration"), iteration_axis)
@@ -93,7 +93,7 @@ target = find_target_timing("small_matrix", 600_000, 900_000, 1.2)
 small_matrix_axis = 0:Δn:501Δn
 small_matrix_time = timing.(Ref("small_matrix"), small_matrix_axis)
 plot!(small_matrix_axis, small_matrix_time; label = "small_matrix")
-max_n = max(max_n, last(small_matrix_axis))
+max_n = max(max_n, last(small_matrix_axis)) =#
 
 target = find_target_timing("rev_pow", 600_000, 900_000, 1.2)
 Δn = target ÷ 500
@@ -101,6 +101,13 @@ rev_pow_axis = 0:Δn:501Δn
 rev_pow_time = timing.(Ref("rev_pow"), rev_pow_axis)
 plot!(rev_pow_axis, rev_pow_time; label = "rev_pow")
 max_n = max(max_n, last(rev_pow_axis))
+
+target = find_target_timing("removed_abstrat", 600_000, 900_000, 1.2)
+Δn = target ÷ 500
+removed_abstrat_axis = 0:Δn:501Δn
+removed_abstrat_time = timing.(Ref("removed_abstrat"), removed_abstrat_axis)
+plot!(removed_abstrat_axis, removed_abstrat_time; label = "removed_abstrat")
+max_n = max(max_n, last(removed_abstrat_axis))
 
 plot!([0, max_n], [1, 1]; c = :black, lw = 2, label = false)
 ylims!((0, 1.2))
