@@ -115,6 +115,7 @@ pub mod recursion;
 pub mod iteration;
 pub mod matrix_pow;
 pub mod small_matrix;
+pub mod rev_pow;
 
 
 #[cfg(test)]
@@ -131,5 +132,8 @@ mod test {
 
         let fib = iteration::fibonacci(100_000);
         assert_eq!(matrix_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<ElementarySchoolMul>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstrat::<ElementarySchoolMul>(100_000), fib);
     }
 }

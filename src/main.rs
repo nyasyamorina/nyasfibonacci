@@ -13,6 +13,7 @@ static FIBONACCIS: &[(&str, fn(u64) -> UBig)] = &[
     ("iteration", iteration::fibonacci),
     ("matrix_pow", matrix_pow::fibonacci::<ElementarySchoolMul>),
     ("small_matrix", small_matrix::fibonacci::<ElementarySchoolMul>),
+    ("rev_pow", rev_pow::fibonacci::<ElementarySchoolMul>)
 ];
 
 #[derive(Debug)]
