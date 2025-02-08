@@ -102,12 +102,36 @@ rev_pow_time = timing.(Ref("rev_pow"), rev_pow_axis)
 plot!(rev_pow_axis, rev_pow_time; label = "rev_pow")
 max_n = max(max_n, last(rev_pow_axis))
 
-#= target = find_target_timing("removed_abstrat", 600_000, 900_000, 1.2)
+#= target = find_target_timing("removed_abstract", 600_000, 900_000, 1.2)
 Δn = target ÷ 500
-removed_abstrat_axis = 0:Δn:501Δn
-removed_abstrat_time = timing.(Ref("removed_abstrat"), removed_abstrat_axis)
-plot!(removed_abstrat_axis, removed_abstrat_time; label = "removed_abstrat")
-max_n = max(max_n, last(removed_abstrat_axis)) =#
+removed_abstract_axis = 0:Δn:501Δn
+removed_abstract_time = timing.(Ref("removed_abstract"), removed_abstract_axis)
+plot!(removed_abstract_axis, removed_abstract_time; label = "removed_abstract")
+max_n = max(max_n, last(removed_abstract_axis)) =#
+
+target = 6_041_564 # unfortunately, `find_target_timing` does not work well with `karatsuba_mul`
+Δn = target ÷ 500
+rev_pow_karatsuba_axis = 0:Δn:501Δn
+rev_pow_karatsuba_time = timing.(Ref("rev_pow_karatsuba"), rev_pow_karatsuba_axis)
+plot!(rev_pow_karatsuba_axis, rev_pow_karatsuba_time; label = "rev_pow_karatsuba")
+max_n = max(max_n, last(rev_pow_karatsuba_axis))
 
 plot!([0, max_n], [1, 1]; c = :black, lw = 2, label = false)
 ylims!((0, 1.2))
+
+function fibonacci(x::UInt64)::BigInt
+    function fib_pair(x::UInt64)::Tuple{BigInt, BigInt}
+        x == 0 && return (1, 0)
+        x == 1 && return (0, 1)
+
+        y = x >> 1 # y = floor(x / 2)
+        (Fy_1, Fy) = fib_pair(y)
+        Fx_1 = Fy_1^2 + Fy^2
+        Fx = Fy * ((Fy_1 << 1) + Fy)
+
+        x & 1 == 0 || ((Fx_1, Fx) = (Fx, Fx_1 + Fx))
+        (Fx_1, Fx)
+    end
+
+    last(fib_pair(x))
+end

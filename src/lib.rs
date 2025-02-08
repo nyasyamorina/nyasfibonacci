@@ -113,7 +113,7 @@ impl AddAssign<&UBig> for UBig {
 }
 
 pub mod mul;
-pub use mul::{UBigMul, ElementarySchoolMul};
+pub use mul::{UBigMul, ElementarySchoolMul, KaratsubaMul};
 
 pub mod recursion;
 pub mod iteration;
@@ -139,5 +139,9 @@ mod test {
         assert_eq!(small_matrix::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<ElementarySchoolMul>(100_000), fib);
+        assert_eq!(matrix_pow::fibonacci::<KaratsubaMul>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<KaratsubaMul>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<KaratsubaMul>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<KaratsubaMul>(100_000), fib);
     }
 }

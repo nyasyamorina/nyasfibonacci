@@ -42,12 +42,12 @@ pub fn fibonacci_removed_matrix_abstract<M: UBigMul>(n: u64) -> UBig {
         let (mut _prev, mut _curr) = fib_pair::<M>(n >> 1);
 
         // F_{2n-1} = F_{n-1}^2 + F_{n}^2
-        let mut prev = M::sqr(&mut _prev);
-        M::sqr_addto(&mut _curr, &mut prev);
+        let mut prev = M::sqr(&_prev);
+        M::sqr_addto(&_curr, &mut prev);
 
         // F_{2n} = F_{n} * (2F_{n-1} + F_{n})
         _prev.shl1(); _prev += &_curr;
-        let mut curr = M::mul(&mut _curr, &mut _prev);
+        let mut curr = M::mul(&_curr, &_prev);
 
         if n & 1 != 0 {
             // F_{n+1} = F_{n-1} + F_{n}
@@ -60,11 +60,11 @@ pub fn fibonacci_removed_matrix_abstract<M: UBigMul>(n: u64) -> UBig {
 
     trait SqrAddto {
         // out += x^2
-        fn sqr_addto(x: &mut UBig, out: &mut UBig);
+        fn sqr_addto(x: &UBig, out: &mut UBig);
     }
 
     impl<M: UBigMul> SqrAddto for M {
-        /* default */ fn sqr_addto(x: &mut UBig, out: &mut UBig) {
+        /* default */ fn sqr_addto(x: &UBig, out: &mut UBig) {
             let tmp = Self::sqr(x);
             *out += &tmp;
         }
@@ -76,7 +76,7 @@ pub fn fibonacci_removed_matrix_abstract<M: UBigMul>(n: u64) -> UBig {
 
     /* impl SqrAddto for super::ElementarySchoolMul {
         // this impl is slitly faster then the default impl
-        fn sqr_addto(x: &mut UBig, out: &mut UBig) {
+        fn sqr_addto(x: &UBig, out: &mut UBig) {
             use super::helpers::*;
 
             let out_len = 2 * x.data.len();

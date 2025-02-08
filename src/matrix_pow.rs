@@ -7,7 +7,7 @@ pub fn fibonacci<M: UBigMul>(mut n: u64) -> UBig {
     loop { // `loop` in `Rust` is equal to `while (true)` in other languages.
         if n & 1 != 0 {
             // a <- a * b
-            a = a.mul::<M>(&mut b);
+            a = a.mul::<M>(&b);
         }
 
         n >>= 1;
@@ -47,38 +47,38 @@ impl Matrix {
 }
 impl Matrix {
     /// self * rhs
-    pub fn mul<M: UBigMul>(&mut self, rhs: &mut Matrix) -> Matrix {
+    pub fn mul<M: UBigMul>(&self, rhs: &Matrix) -> Matrix {
         // tl = self.tl * rhs.tl + self.tr * rhs.bl
-        let mut tl = M::mul(&mut self.tl, &mut rhs.tl);
-        tl += &M::mul(&mut self.tr, &mut rhs.bl);
+        let mut tl = M::mul(&self.tl, &rhs.tl);
+        tl += &M::mul(&self.tr, &rhs.bl);
         // tr = self.tl * rhs.tr + self.tr * rhs.br
-        let mut tr = M::mul(&mut self.tl, &mut rhs.tr);
-        tr += &M::mul(&mut self.tr, &mut rhs.br);
+        let mut tr = M::mul(&self.tl, &rhs.tr);
+        tr += &M::mul(&self.tr, &rhs.br);
         // bl = self.bl * rhs.tl + self.br * rhs.bl
-        let mut bl = M::mul(&mut self.bl, &mut rhs.tl);
-        bl += &M::mul(&mut self.br, &mut rhs.bl);
+        let mut bl = M::mul(&self.bl, &rhs.tl);
+        bl += &M::mul(&self.br, &rhs.bl);
         // br = self.bl * rhs.tr + self.br * rhs.br
-        let mut br = M::mul(&mut self.bl, &mut rhs.tr);
-        br += &M::mul(&mut self.br, &mut rhs.br);
+        let mut br = M::mul(&self.bl, &rhs.tr);
+        br += &M::mul(&self.br, &rhs.br);
 
         Matrix { tl, tr, bl, br }
     }
 
     /// self^2
     pub fn sqr<M: UBigMul>(mut self) -> Matrix {
-        let tmp = M::mul(&mut self.tr, &mut self.bl);
+        let tmp = M::mul(&self.tr, &self.bl);
         // tl = self.tl^2 + self.tr * self.bl
-        let mut tl = M::sqr(&mut self.tl);
+        let mut tl = M::sqr(&self.tl);
         tl += &tmp;
         // br = self.br^2 + self.tr * self.bl
-        let mut br = M::sqr(&mut self.br);
+        let mut br = M::sqr(&self.br);
         br += &tmp;
 
         self.tl += &self.br; // use self.tl as tmp buffer
         // tr = self.tr * (self.rl + self.br)
-        let tr = M::mul(&mut self.tr, &mut self.tl);
+        let tr = M::mul(&self.tr, &self.tl);
         // bl = self.bl * (self.rl + self.br)
-        let bl = M::mul(&mut self.bl, &mut self.tl);
+        let bl = M::mul(&self.bl, &self.tl);
 
         Matrix { tl, tr, bl, br }
     }

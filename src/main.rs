@@ -15,6 +15,9 @@ static FIBONACCIS: &[(&str, fn(u64) -> UBig)] = &[
     ("small_matrix", small_matrix::fibonacci::<ElementarySchoolMul>),
     ("rev_pow", rev_pow::fibonacci::<ElementarySchoolMul>),
     ("removed_abstract", rev_pow::fibonacci_removed_matrix_abstract::<ElementarySchoolMul>),
+    ("matrix_pow_karatsuba", matrix_pow::fibonacci::<KaratsubaMul>),
+    ("small_matrix_karatsuba", small_matrix::fibonacci::<KaratsubaMul>),
+    ("rev_pow_karatsuba", rev_pow::fibonacci::<KaratsubaMul>),
 ];
 
 #[derive(Debug)]
