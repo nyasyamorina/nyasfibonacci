@@ -138,6 +138,6 @@ mod test {
         assert_eq!(matrix_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(small_matrix::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci_removed_matrix_abstrat::<ElementarySchoolMul>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<ElementarySchoolMul>(100_000), fib);
     }
 }

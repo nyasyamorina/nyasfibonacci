@@ -28,7 +28,7 @@ pub fn fibonacci<M: UBigMul>(n: u64) -> UBig {
 }
 
 
-pub fn fibonacci_removed_matrix_abstrat<M: UBigMul>(n: u64) -> UBig {
+pub fn fibonacci_removed_matrix_abstract<M: UBigMul>(n: u64) -> UBig {
     return fib_pair::<M>(n).1;
 
     // return (F_{n-1}, F_{n})
