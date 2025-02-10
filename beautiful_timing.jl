@@ -1,5 +1,7 @@
 using Plots
 
+skip_timing = false
+
 
 cd(@__DIR__)
 
@@ -67,7 +69,29 @@ methods = [
     "matrix_pow",
     "small_matrix",
     "rev_pow",
+    "rev_pow_karatsuba",
+    "rev_pow_karatsuba_anylen",
 ]
+
+""" rev_pow in ∴Julia  """
+function fibonacci_julia(x::UInt64)::BigInt
+    function fib_pair(x::UInt64)::Tuple{BigInt, BigInt}
+        x == 0 && return (1, 0)
+        x == 1 && return (0, 1)
+
+        y = x >> 1 # y = floor(x / 2)
+        (Fy_1, Fy) = fib_pair(y)
+        Fx_1 = Fy_1^2 + Fy^2
+        Fx = Fy * ((Fy_1 << 1) + Fy)
+
+        x & 1 == 0 || ((Fx_1, Fx) = (Fx, Fx_1 + Fx))
+        (Fx_1, Fx)
+    end
+
+    last(fib_pair(x))
+end
+
+if !skip_timing
 
 recursion_axis = 0:38
 recursion_time = timing.(Ref("recursion"), recursion_axis)
@@ -111,27 +135,19 @@ max_n = max(max_n, last(removed_abstract_axis)) =#
 
 target = 6_041_564 # unfortunately, `find_target_timing` does not work well with `karatsuba_mul`
 Δn = target ÷ 500
-rev_pow_karatsuba_axis = 0:Δn:501Δn
-rev_pow_karatsuba_time = timing.(Ref("rev_pow_karatsuba"), rev_pow_karatsuba_axis)
-plot!(rev_pow_karatsuba_axis, rev_pow_karatsuba_time; label = "rev_pow_karatsuba")
-max_n = max(max_n, last(rev_pow_karatsuba_axis))
+karatsuba_axis = 0:Δn:501Δn
+karatsuba_time = timing.(Ref("rev_pow_karatsuba"), karatsuba_axis)
+plot!(karatsuba_axis, karatsuba_time; label = "karatsuba")
+max_n = max(max_n, last(karatsuba_axis))
+
+#= target = 6_041_564 # unfortunately, `find_target_timing` does not work well with `karatsuba_mul`
+Δn = target ÷ 500
+karatsuba_anylen_axis = 0:Δn:501Δn
+karatsuba_anylen_time = timing.(Ref("karatsuba_anylen"), karatsuba_anylen_axis)
+plot!(karatsuba_anylen_axis, karatsuba_anylen_time; label = "karatsuba_anylen")
+max_n = max(max_n, last(karatsuba_anylen_axis)) =#
 
 plot!([0, max_n], [1, 1]; c = :black, lw = 2, label = false)
 ylims!((0, 1.2))
 
-function fibonacci(x::UInt64)::BigInt
-    function fib_pair(x::UInt64)::Tuple{BigInt, BigInt}
-        x == 0 && return (1, 0)
-        x == 1 && return (0, 1)
-
-        y = x >> 1 # y = floor(x / 2)
-        (Fy_1, Fy) = fib_pair(y)
-        Fx_1 = Fy_1^2 + Fy^2
-        Fx = Fy * ((Fy_1 << 1) + Fy)
-
-        x & 1 == 0 || ((Fx_1, Fx) = (Fx, Fx_1 + Fx))
-        (Fx_1, Fx)
-    end
-
-    last(fib_pair(x))
-end
+end # skip_timing

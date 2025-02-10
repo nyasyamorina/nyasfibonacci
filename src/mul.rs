@@ -51,24 +51,6 @@ impl UBigMul for ElementarySchoolMul {
 
 
 pub enum KaratsubaMul {}
-impl KaratsubaMul {
-    fn properlen(len: usize) -> usize {
-        //! the minimum integer power of 2 that is greater than or equal to the input
-        if len == 0 {
-            return 0;
-        }
-        let mut n = len - 1;
-        n |= n >> 1;
-        n |= n >> 2;
-        n |= n >> 4;
-        n |= n >> 8;
-        n |= n >> 16;
-        if size_of::<usize>() > 32/8 {
-            n |= n >> 32;
-        }
-        n + 1
-    }
-}
 impl UBigMul for KaratsubaMul {
     fn mul(lhs: &UBig, rhs: &UBig) -> UBig {
         use std::{cmp::max, ptr};
@@ -76,7 +58,7 @@ impl UBigMul for KaratsubaMul {
             return UBig::zero(); // everything mul by 0 is 0
         }
 
-        let len = KaratsubaMul::properlen(max(lhs.data.len(), rhs.data.len()));
+        let len = max(lhs.data.len(), rhs.data.len()).next_power_of_two();
 
         let mut vec = vec![0; 2*len/*for out*/ + 2*len/*for tmp*/+ len/*for lhs*/ + len/*for rhs*/];
         let out = vec.as_mut_ptr();
@@ -88,7 +70,7 @@ impl UBigMul for KaratsubaMul {
             ptr::copy_nonoverlapping(lhs.data.as_ptr(), a, lhs.data.len());
             ptr::copy_nonoverlapping(rhs.data.as_ptr(), b, rhs.data.len());
 
-            karatsuba_mul(a, b, out, tmp, len);
+            karatsuba_mul_power_of_two_len(a, b, out, tmp, len);
         }
 
         vec.truncate(2 * len); // truncate the tmp buffer
@@ -103,7 +85,7 @@ impl UBigMul for KaratsubaMul {
             return UBig::zero(); // everything mul by 0 is 0
         }
 
-        let len = KaratsubaMul::properlen(x.data.len());
+        let len = x.data.len().next_power_of_two();
 
         let mut vec = vec![0; 2*len/*for out*/ + 2*len/*for tmp*/+ len/*for xx*/];
         let out = vec.as_mut_ptr();
@@ -113,7 +95,7 @@ impl UBigMul for KaratsubaMul {
         unsafe {
             ptr::copy_nonoverlapping(x.data.as_ptr(), xx, x.data.len());
 
-            karatsuba_mul(xx, xx, out, tmp, len);
+            karatsuba_mul_power_of_two_len(xx, xx, out, tmp, len);
         }
 
         vec.truncate(2 * len); // truncate the tmp buffer
@@ -122,3 +104,56 @@ impl UBigMul for KaratsubaMul {
         res
     }
 }
+
+pub enum KaratsubaMulAnyLength {}
+impl UBigMul for KaratsubaMulAnyLength {
+    fn mul<'a>(mut lhs: &'a UBig, mut rhs: &'a UBig) -> UBig {
+        if lhs.data.len() == 0 || rhs.data.len() == 0 {
+            return UBig::zero(); // everything mul by 0 is 0
+        }
+        if lhs.data.len() < rhs.data.len() {
+            (lhs, rhs) = (rhs, lhs); // always `lhs` is longer than `rhs`
+        }
+
+        let out_len = lhs.data.len() + rhs.data.len();
+        let tmp_len = karatsuba_anylen_tmp_len(lhs.data.len(), rhs.data.len());
+
+        let mut vec = vec![0; out_len + tmp_len];
+        let out = vec.as_mut_ptr();
+        let _tmp = out.wrapping_add(out_len);
+
+        unsafe {
+            karatsuba_mul_lhs_longer_stack(&lhs.data, &rhs.data, out, _tmp);
+        }
+
+        vec.truncate(out_len); // truncate the tmp buffer
+        let mut res = UBig::from_vec(vec);
+        res.truncate(); // the highest part can be 0 in mul, remove it if it is 0
+        res
+    }
+
+    fn sqr(x: &UBig) -> UBig {
+        if x.data.len() == 0 {
+            return UBig::zero(); // everything mul by 0 is 0
+        }
+
+        let in_len = x.data.len();
+        let out_len = in_len << 1;
+        let tmp_len = in_len.next_power_of_two() << 1;
+
+        let mut vec = vec![0; out_len + tmp_len];
+        let out = vec.as_mut_ptr();
+        let tmp = out.wrapping_add(out_len);
+
+        unsafe {
+            let x = x.data.as_ptr();
+            karatsuba_mul_equal_len(x, x, out, in_len, tmp);
+        }
+
+        vec.truncate(out_len); // truncate the tmp buffer
+        let mut res = UBig::from_vec(vec);
+        res.truncate(); // the highest part can be 0 in mul, remove it if it is 0
+        res
+    }
+}
+

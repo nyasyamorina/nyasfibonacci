@@ -2,7 +2,7 @@
 /* #![feature(min_specialization)] */
 
 
-use std::{cmp::min, fmt, ops::AddAssign, ptr};
+use std::{fmt, ops::AddAssign, slice};
 
 mod helpers;
 
@@ -72,48 +72,30 @@ impl fmt::Display for UBig {
 
 impl AddAssign<&UBig> for UBig {
     fn add_assign(&mut self, rhs: &UBig) {
-        // addition in overlap length
-        let overlap = min(self.data.len(), rhs.data.len());
-        let mut carry = add_into(&mut self.data[..overlap], &rhs.data[..overlap]);
+        use helpers::*;
 
-        if rhs.data.len() > self.data.len() {
-            // copy extra data from `rhs` to `self`
-            self.data.reserve(rhs.data.len()); // make sure `self` can hold the extra data
-            let dst = self.data.as_mut_ptr().wrapping_add(overlap);
-            let src = rhs.data.as_ptr().wrapping_add(overlap);
-            unsafe { // copy data and set length
-                ptr::copy_nonoverlapping(src, dst, rhs.data.len() - overlap);
+        let carry = unsafe {
+            if self.data.len() >= rhs.data.len() {
+                let lhs_slice = slice::from_raw_parts(self.data.as_ptr(), self.data.len());
+                addcarry_ubig_lhs_longer(Carry::zero(), lhs_slice, &rhs.data, self.data.as_mut_ptr())
+            } else {
+                self.data.reserve(rhs.data.len());
+                let lhs_slice = slice::from_raw_parts(self.data.as_ptr(), self.data.len());
+                let carry = addcarry_ubig_lhs_longer(Carry::zero(), &rhs.data, lhs_slice, self.data.as_mut_ptr());
                 self.data.set_len(rhs.data.len());
+                carry
             }
-        }
+        };
 
-        // handle the carry from overlap addition
         if carry.has() {
-            carry = add1_into(&mut self.data[overlap..]);
-            if carry.has() {
-                // carry overflow
-                self.data.push(1);
-            }
-        }
-
-        use helpers::{addcarry, add1, Carry};
-
-        fn add_into(lhs: &mut [u64], rhs: &[u64]) -> Carry {
-            let len = lhs.len();
-            let lhs = lhs.as_mut_ptr();
-            let rhs = rhs.as_ptr();
-            unsafe { addcarry(Carry::zero(), lhs, rhs, lhs, len) }
-        }
-        fn add1_into(lhs: &mut [u64]) -> Carry {
-            let len = lhs.len();
-            let lhs = lhs.as_mut_ptr();
-            unsafe { add1(lhs, lhs, len) }
+            // carry overflow
+            self.data.push(1);
         }
     }
 }
 
 pub mod mul;
-pub use mul::{UBigMul, ElementarySchoolMul, KaratsubaMul};
+pub use mul::{UBigMul, ElementarySchoolMul, KaratsubaMul, KaratsubaMulAnyLength};
 
 pub mod recursion;
 pub mod iteration;
@@ -133,15 +115,21 @@ mod test {
         assert_eq!(fib.data[0], 24157817u64);
 
         assert_eq!(iteration::fibonacci(37), fib);
-
         let fib = iteration::fibonacci(100_000);
+
         assert_eq!(matrix_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(small_matrix::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<ElementarySchoolMul>(100_000), fib);
+
         assert_eq!(matrix_pow::fibonacci::<KaratsubaMul>(100_000), fib);
         assert_eq!(small_matrix::fibonacci::<KaratsubaMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<KaratsubaMul>(100_000), fib);
         assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<KaratsubaMul>(100_000), fib);
+
+        assert_eq!(matrix_pow::fibonacci::<KaratsubaMulAnyLength>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<KaratsubaMulAnyLength>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<KaratsubaMulAnyLength>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<KaratsubaMulAnyLength>(100_000), fib);
     }
 }
