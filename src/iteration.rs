@@ -1,4 +1,4 @@
-use super::UBig;
+use crate::UBig;
 
 pub fn fibonacci(mut n: u64) -> UBig {
     if n == 0 {

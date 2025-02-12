@@ -1,7 +1,5 @@
-
-
-use super::{UBig, UBigMul};
-use super::small_matrix::SmallMatrix;
+use crate::{UBig, UBigMul};
+use crate::small_matrix::SmallMatrix;
 
 pub fn fibonacci<M: UBigMul>(n: u64) -> UBig {
     return fib_mat::<M>(n).curr;
@@ -74,10 +72,10 @@ pub fn fibonacci_removed_matrix_abstract<M: UBigMul>(n: u64) -> UBig {
     // if you are using nightly rust and enabled feature `specialization` or `min_specialization`,
     // then you can use the code below, and also need to uncomment the `default` before `sqr_addto` above.
 
-    /* impl SqrAddto for super::ElementarySchoolMul {
+    /* impl SqrAddto for crate::mul::ElementarySchoolMul {
         // this impl is slitly faster then the default impl
         fn sqr_addto(x: &UBig, out: &mut UBig) {
-            use super::helpers::*;
+            use crate::helpers::*;
 
             let out_len = 2 * x.data.len();
             if out.data.len() < out_len {

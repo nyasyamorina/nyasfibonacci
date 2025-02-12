@@ -95,7 +95,7 @@ impl AddAssign<&UBig> for UBig {
 }
 
 pub mod mul;
-pub use mul::{UBigMul, ElementarySchoolMul, KaratsubaMul, KaratsubaMulAnyLength};
+pub use mul::UBigMul;
 
 pub mod recursion;
 pub mod iteration;
@@ -106,7 +106,7 @@ pub mod rev_pow;
 
 #[cfg(test)]
 mod test {
-    use super::*;
+    use crate::*;
 
     #[test]
     fn it_works() {
@@ -117,19 +117,19 @@ mod test {
         assert_eq!(iteration::fibonacci(37), fib);
         let fib = iteration::fibonacci(100_000);
 
-        assert_eq!(matrix_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
-        assert_eq!(small_matrix::fibonacci::<ElementarySchoolMul>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci::<ElementarySchoolMul>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<ElementarySchoolMul>(100_000), fib);
+        assert_eq!(matrix_pow::fibonacci::<mul::ElementarySchool>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<mul::ElementarySchool>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<mul::ElementarySchool>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::ElementarySchool>(100_000), fib);
 
-        assert_eq!(matrix_pow::fibonacci::<KaratsubaMul>(100_000), fib);
-        assert_eq!(small_matrix::fibonacci::<KaratsubaMul>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci::<KaratsubaMul>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<KaratsubaMul>(100_000), fib);
+        assert_eq!(matrix_pow::fibonacci::<mul::Karatsuba>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<mul::Karatsuba>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<mul::Karatsuba>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::Karatsuba>(100_000), fib);
 
-        assert_eq!(matrix_pow::fibonacci::<KaratsubaMulAnyLength>(100_000), fib);
-        assert_eq!(small_matrix::fibonacci::<KaratsubaMulAnyLength>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci::<KaratsubaMulAnyLength>(100_000), fib);
-        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<KaratsubaMulAnyLength>(100_000), fib);
+        assert_eq!(matrix_pow::fibonacci::<mul::KaratsubaAnyLength>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<mul::KaratsubaAnyLength>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<mul::KaratsubaAnyLength>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::KaratsubaAnyLength>(100_000), fib);
     }
 }

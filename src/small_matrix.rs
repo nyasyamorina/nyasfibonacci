@@ -1,4 +1,4 @@
-use super::{UBig, UBigMul};
+use crate::{UBig, UBigMul};
 
 pub fn fibonacci<M: UBigMul>(mut n: u64) -> UBig {
     let mut a = SmallMatrix::iden();

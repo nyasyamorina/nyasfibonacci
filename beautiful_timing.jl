@@ -69,6 +69,7 @@ methods = [
     "matrix_pow",
     "small_matrix",
     "rev_pow",
+    "removed_abstract",
     "rev_pow_karatsuba",
     "rev_pow_karatsuba_anylen",
 ]
@@ -143,7 +144,7 @@ max_n = max(max_n, last(karatsuba_axis))
 #= target = 6_041_564 # unfortunately, `find_target_timing` does not work well with `karatsuba_mul`
 Δn = target ÷ 500
 karatsuba_anylen_axis = 0:Δn:501Δn
-karatsuba_anylen_time = timing.(Ref("karatsuba_anylen"), karatsuba_anylen_axis)
+karatsuba_anylen_time = timing.(Ref("rev_pow_karatsuba_anylen"), karatsuba_anylen_axis)
 plot!(karatsuba_anylen_axis, karatsuba_anylen_time; label = "karatsuba_anylen")
 max_n = max(max_n, last(karatsuba_anylen_axis)) =#
 

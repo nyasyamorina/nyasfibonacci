@@ -11,16 +11,16 @@ use nyasfibonacci::*;
 static FIBONACCIS: &[(&str, fn(u64) -> UBig)] = &[
     ("recursion", recursion::fibonacci),
     ("iteration", iteration::fibonacci),
-    ("matrix_pow", matrix_pow::fibonacci::<ElementarySchoolMul>),
-    ("small_matrix", small_matrix::fibonacci::<ElementarySchoolMul>),
-    ("rev_pow", rev_pow::fibonacci::<ElementarySchoolMul>),
-    ("removed_abstract", rev_pow::fibonacci_removed_matrix_abstract::<ElementarySchoolMul>),
-    ("matrix_pow_karatsuba", matrix_pow::fibonacci::<KaratsubaMul>),
-    ("small_matrix_karatsuba", small_matrix::fibonacci::<KaratsubaMul>),
-    ("rev_pow_karatsuba", rev_pow::fibonacci::<KaratsubaMul>),
-    ("matrix_pow_karatsuba_anylen", matrix_pow::fibonacci::<KaratsubaMulAnyLength>),
-    ("small_matrix_karatsuba_anylen", small_matrix::fibonacci::<KaratsubaMulAnyLength>),
-    ("rev_pow_karatsuba_anylen", rev_pow::fibonacci::<KaratsubaMulAnyLength>),
+    ("matrix_pow", matrix_pow::fibonacci::<mul::ElementarySchool>),
+    ("small_matrix", small_matrix::fibonacci::<mul::ElementarySchool>),
+    ("rev_pow", rev_pow::fibonacci::<mul::ElementarySchool>),
+    ("removed_abstract", rev_pow::fibonacci_removed_matrix_abstract::<mul::ElementarySchool>),
+    ("matrix_pow_karatsuba", matrix_pow::fibonacci::<mul::Karatsuba>),
+    ("small_matrix_karatsuba", small_matrix::fibonacci::<mul::Karatsuba>),
+    ("rev_pow_karatsuba", rev_pow::fibonacci::<mul::Karatsuba>),
+    ("matrix_pow_karatsuba_anylen", matrix_pow::fibonacci::<mul::KaratsubaAnyLength>),
+    ("small_matrix_karatsuba_anylen", small_matrix::fibonacci::<mul::KaratsubaAnyLength>),
+    ("rev_pow_karatsuba_anylen", rev_pow::fibonacci::<mul::KaratsubaAnyLength>),
 ];
 
 #[derive(Debug)]
