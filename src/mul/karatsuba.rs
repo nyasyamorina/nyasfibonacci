@@ -1,7 +1,7 @@
 use crate::{UBig, UBigMul};
 use crate::helpers::*;
 
-use std::slice;
+use std::{slice, cmp::max, ptr};
 
 
 pub enum Karatsuba {}
@@ -127,7 +127,6 @@ impl Karatsuba {
 
 impl UBigMul for Karatsuba {
     fn mul(lhs: &UBig, rhs: &UBig) -> UBig {
-        use std::{cmp::max, ptr};
         if lhs.data.len() == 0 || rhs.data.len() == 0 {
             return UBig::zero(); // everything mul by 0 is 0
         }
@@ -156,7 +155,6 @@ impl UBigMul for Karatsuba {
     }
 
     fn sqr(x: &UBig) -> UBig {
-        use std::ptr;
         if x.data.len() == 0 {
             return UBig::zero(); // everything mul by 0 is 0
         }
@@ -184,10 +182,16 @@ impl UBigMul for Karatsuba {
 }
 
 
-pub enum KaratsubaAnyLength {}
-impl KaratsubaAnyLength {
+
+/// the common part used in both `KaratsubaAnyLength` and `SchönhageStrassen`
+pub enum KaratsubaEqualLength {}
+impl KaratsubaEqualLength {
+    pub fn tmp_len(input_len: usize) -> usize {
+        2 * input_len.next_power_of_two()
+    }
+
     #[inline]
-    unsafe fn ptr_mul_eqlen(lhs: *const u64, rhs: *const u64, out: *mut u64, len: usize, tmp: *mut u64) {
+    pub unsafe fn ptr_mul_eqlen(lhs: *const u64, rhs: *const u64, out: *mut u64, len: usize, tmp: *mut u64) {
         //! # Safety
         //!
         //! lhs.len() = rhs.len() = len; out.len() = 2*len; tmp.len() = 2*next_power_of_two(len)
@@ -229,7 +233,7 @@ impl KaratsubaAnyLength {
         Karatsuba::ptr_mul(l0, r0, z0, next_tmp, half_len);
         // z2 = l1 * r1
         let z2 = out.wrapping_add(full_len);
-        KaratsubaAnyLength::ptr_mul_eqlen(l1, r1, z2, extra_len, next_tmp);
+        Self::ptr_mul_eqlen(l1, r1, z2, extra_len, next_tmp);
 
         // z1 = z_ - z0 - z1
         let z1 = z_;
@@ -254,7 +258,11 @@ impl KaratsubaAnyLength {
 
         debug_assert!(!no_carry1.has() && !no_carry2.has());
     }
+}
 
+
+pub enum KaratsubaAnyLength {}
+impl KaratsubaAnyLength {
     #[allow(dead_code)] // this method is not used because it may cause stack overflow, see `ptr_mul_anylen_stack` below.
     #[inline]
     unsafe fn ptr_mul_anylen(lhs: &[u64], rhs: &[u64], out: *mut u64, tmp: *mut u64) {
@@ -285,7 +293,7 @@ impl KaratsubaAnyLength {
 
         // z0 = l0 * r0
         let z0 = out;
-        KaratsubaAnyLength::ptr_mul_eqlen(l0, r0, z0, half_len, tmp);
+        KaratsubaEqualLength::ptr_mul_eqlen(l0, r0, z0, half_len, tmp);
 
         // z1 = l1 * r0
         if extra_len == 0 {
@@ -340,7 +348,7 @@ impl KaratsubaAnyLength {
 
             // z0 = l0 * r0
             let z0 = out;
-            KaratsubaAnyLength::ptr_mul_eqlen(l0, r0, z0, half_len, tmp);
+            KaratsubaEqualLength::ptr_mul_eqlen(l0, r0, z0, half_len, tmp);
 
             // z1 = l1 * r0
             if extra_len == 0 {
@@ -378,7 +386,7 @@ impl KaratsubaAnyLength {
         if rhs_len < 2 {
             return 0;
         }
-        let z0_len = rhs_len.next_power_of_two() << 1;
+        let z0_len = KaratsubaEqualLength::tmp_len(rhs_len);
         // assume: lhs_len = n * rhs_len + m
         let (n, m) = (lhs_len / rhs_len, lhs_len % rhs_len);
         let curr = n * m + (n * (n + 1) / 2) * rhs_len;
@@ -428,7 +436,7 @@ impl UBigMul for KaratsubaAnyLength {
 
         unsafe {
             let x = x.data.as_ptr();
-            KaratsubaAnyLength::ptr_mul_eqlen(x, x, out, in_len, tmp);
+            KaratsubaEqualLength::ptr_mul_eqlen(x, x, out, in_len, tmp);
         }
 
         vec.truncate(out_len); // truncate the tmp buffer

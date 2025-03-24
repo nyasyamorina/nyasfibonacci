@@ -74,7 +74,7 @@ methods = [
     "rev_pow_karatsuba_anylen",
 ]
 
-""" rev_pow in ∴Julia  """
+""" rev_pow in Julia∴  """
 function fibonacci_julia(x::UInt64)::BigInt
     function fib_pair(x::UInt64)::Tuple{BigInt, BigInt}
         x == 0 && return (1, 0)
@@ -85,11 +85,21 @@ function fibonacci_julia(x::UInt64)::BigInt
         Fx_1 = Fy_1^2 + Fy^2
         Fx = Fy * ((Fy_1 << 1) + Fy)
 
-        x & 1 == 0 || ((Fx_1, Fx) = (Fx, Fx_1 + Fx))
+        isodd(x) && ((Fx_1, Fx) = (Fx, Fx_1 + Fx))
         (Fx_1, Fx)
     end
 
     last(fib_pair(x))
+end
+
+function timing_julia(x::UInt64)
+    start = time()
+    # yeah, this line may or may not be optimized away by the compiler, resulting in a timing of 0s,
+    # and I don't know how to avoid this.
+    res = fibonacci_julia(x)
+    t = time() - start
+    @info "timing `julia::fibonacci($x)` in $t secs"
+    t
 end
 
 if !skip_timing
@@ -147,6 +157,20 @@ karatsuba_anylen_axis = 0:Δn:501Δn
 karatsuba_anylen_time = timing.(Ref("rev_pow_karatsuba_anylen"), karatsuba_anylen_axis)
 plot!(karatsuba_anylen_axis, karatsuba_anylen_time; label = "karatsuba_anylen")
 max_n = max(max_n, last(karatsuba_anylen_axis)) =#
+
+target = 12_082_940 # unfortunately, `find_target_timing` does not work well with `schonhage_strassen_mul`
+Δn = target ÷ 500
+schonhage_strassen_axis = 0:Δn:501Δn
+schonhage_strassen_time = timing.(Ref("rev_pow_schonhage_strassen"), schonhage_strassen_axis)
+plot!(schonhage_strassen_axis, schonhage_strassen_time; label = "schönhage_strassen")
+max_n = max(max_n, last(schonhage_strassen_axis))
+
+target = 170_000_000
+Δn = target ÷ 500
+julia_axis = 0:Δn:501Δn
+julia_time = timing_julia.(UInt64.(julia_axis))
+plot!(julia_axis, julia_time; label = "julia")
+max_n = max(max_n, last(julia_axis))
 
 plot!([0, max_n], [1, 1]; c = :black, lw = 2, label = false)
 ylims!((0, 1.2))

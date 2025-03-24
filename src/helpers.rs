@@ -14,13 +14,18 @@ impl Carry {
     pub fn zero() -> Carry {
         Carry(false)
     }
+    #[inline(always)]
+    /// the 1 carry (has carrh)
+    pub fn one() -> Carry {
+        Carry(true)
+    }
 
     #[inline(always)]
     /// construct carry directly from inside value
     pub unsafe fn from(carry: bool) -> Carry {
         Carry(carry)
     }
-#[inline(always)]
+    #[inline(always)]
     /// get the value inside, `bool` for "normal" mode, `u8` for x86
     pub fn get(&self) -> bool {
         self.0
@@ -32,7 +37,11 @@ impl Carry {
         self.0
     }
 
-
+    #[inline(always)]
+    /// returns a u8, 0 for no carry, 1 for carry
+    pub fn as_u64(&self) -> u64 {
+        if self.0 { 1 } else { 0 }
+    }
     #[inline(always)]
     /// returns a u8, 0 for no carry, 1 for carry
     pub fn as_u8(&self) -> u8 {
@@ -97,6 +106,11 @@ impl Carry {
     pub fn zero() -> Carry {
         Carry(0)
     }
+    #[inline(always)]
+    /// the 1 carry (has carrh)
+    pub fn one() -> Carry {
+        Carry(1)
+    }
 
     #[inline(always)]
     /// construct carry directly from inside value
@@ -116,6 +130,11 @@ impl Carry {
         self.0 != 0
     }
 
+    #[inline(always)]
+    /// returns a u8, 0 for no carry, 1 for carry
+    pub fn as_u64(&self) -> u64 {
+        self.0 as u64
+    }
     #[inline(always)]
     /// returns a u8, 0 for no carry, 1 for carry
     pub fn as_u8(&self) -> u8 {
@@ -342,6 +361,30 @@ pub unsafe fn mul_ubig_addto(lhs: &[u64], rhs: &[u64], mut out: *mut u64) -> Car
 }
 
 
+pub unsafe fn set_to_zeros(mut x: *mut u64, len: usize) {
+    // looks like rust does not have memset function.
+    let stop = x.wrapping_add(len);
+    while x < stop {
+        *x = 0;
+        x = x.wrapping_add(1);
+    }
+}
+
+pub unsafe fn is_all_zeros(mut x: *const u64, len: usize) -> bool {
+    let stop = x.wrapping_add(len);
+    while x < stop {
+        if *x != 0 {
+            return false;
+        }
+        x = x.wrapping_add(1);
+    }
+    true
+}
+
+
+const _: () = assert!(usize::BITS == 32 || usize::BITS == 64);
+const USIZE_HAS_64BITS: bool = usize::BITS == 64;
+
 #[allow(dead_code)]
 /// return the next power of 2 that is greater than or equal to x.
 /// of cause everyone use `usize::next_power_of_two` in rust.
@@ -355,8 +398,50 @@ pub fn next_power_of_two(x: usize) -> usize {
     y |= y >> 4;
     y |= y >> 8;
     y |= y >> 16;
-    if size_of::<usize>() > 32/8 {
+    if USIZE_HAS_64BITS {
         y |= y >> 32;
     }
     return y + 1;
+}
+
+#[allow(dead_code)]
+/// reverse the bits inside integer.
+/// of cause everyone use `usize::reverse_bits` in rust.
+pub fn reverse_bits(x: usize) -> usize {
+    if USIZE_HAS_64BITS {
+        let low32 = reverse_bits_u32((x & u32::MAX as usize) as u32) as usize;
+        let high32 = reverse_bits_u32((x >> 32) as u32) as usize;
+        return (low32 << 32) | high32;
+    } else {
+        return reverse_bits_u32(x as u32) as usize;
+    }
+
+    fn reverse_bits_u32(x: u32) -> u32 {
+        let x = ((x & 0b11111111111111110000000000000000) >> 16) | ((x & 0b00000000000000001111111111111111) << 16);
+        let x = ((x & 0b11111111000000001111111100000000) >>  8) | ((x & 0b00000000111111110000000011111111) <<  8);
+        let x = ((x & 0b11110000111100001111000011110000) >>  4) | ((x & 0b00001111000011110000111100001111) <<  4);
+        let x = ((x & 0b11001100110011001100110011001100) >>  2) | ((x & 0b00110011001100110011001100110011) <<  2);
+        let x = ((x & 0b10101010101010101010101010101010) >>  1) | ((x & 0b01010101010101010101010101010101) <<  1);
+        x
+    }
+}
+
+pub trait IntegerBits {
+    fn bits(&self) -> u32;
+}
+impl IntegerBits for usize {
+    fn bits(&self) -> u32 {
+        Self::BITS - self.leading_zeros()
+    }
+}
+
+pub trait ShrCeil {
+    /// find `k` that `k*2^n >= x`.
+    fn shr_ceil(&self, n: u32) -> Self;
+}
+impl ShrCeil for usize {
+    fn shr_ceil(&self, n: u32) -> Self {
+        let mask = (1 << n) - 1;
+        (self >> n) + (if self & mask != 0 { 1 } else { 0 })
+    }
 }

@@ -5,6 +5,7 @@
 use std::{fmt, ops::AddAssign, slice};
 
 mod helpers;
+use helpers::*;
 
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -64,7 +65,7 @@ impl fmt::Display for UBig {
             Some(x) => write!(f, "{:#X}", x)?,
         };
         for x in iter {
-            write!(f, "_{:#016X}", x)?;
+            write!(f, "_{:016X}", x)?;
         }
         Ok(())
     }
@@ -72,8 +73,6 @@ impl fmt::Display for UBig {
 
 impl AddAssign<&UBig> for UBig {
     fn add_assign(&mut self, rhs: &UBig) {
-        use helpers::*;
-
         let carry = unsafe {
             if self.data.len() >= rhs.data.len() {
                 let lhs_slice = slice::from_raw_parts(self.data.as_ptr(), self.data.len());
@@ -109,27 +108,51 @@ mod test {
     use crate::*;
 
     #[test]
-    fn it_works() {
+    fn test_recursion_and_iteration() {
         let fib = recursion::fibonacci(37);
         assert_eq!(fib.data.len(), 1);
         assert_eq!(fib.data[0], 24157817u64);
 
         assert_eq!(iteration::fibonacci(37), fib);
+    }
+
+    #[test]
+    fn test_elementary_school_mul() {
         let fib = iteration::fibonacci(100_000);
 
         assert_eq!(matrix_pow::fibonacci::<mul::ElementarySchool>(100_000), fib);
         assert_eq!(small_matrix::fibonacci::<mul::ElementarySchool>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<mul::ElementarySchool>(100_000), fib);
         assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::ElementarySchool>(100_000), fib);
+    }
+
+    #[test]
+    fn test_karatsuba_mul() {
+        let fib = iteration::fibonacci(100_000);
 
         assert_eq!(matrix_pow::fibonacci::<mul::Karatsuba>(100_000), fib);
         assert_eq!(small_matrix::fibonacci::<mul::Karatsuba>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<mul::Karatsuba>(100_000), fib);
         assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::Karatsuba>(100_000), fib);
+    }
+
+    #[test]
+    fn test_karatsuba_any_length_mul() {
+        let fib = iteration::fibonacci(100_000);
 
         assert_eq!(matrix_pow::fibonacci::<mul::KaratsubaAnyLength>(100_000), fib);
         assert_eq!(small_matrix::fibonacci::<mul::KaratsubaAnyLength>(100_000), fib);
         assert_eq!(rev_pow::fibonacci::<mul::KaratsubaAnyLength>(100_000), fib);
         assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::KaratsubaAnyLength>(100_000), fib);
+    }
+
+    #[test]
+    fn test_schönhage_strassen_mul() {
+        let fib = iteration::fibonacci(100_000);
+
+        assert_eq!(matrix_pow::fibonacci::<mul::SchönhageStrassen>(100_000), fib);
+        assert_eq!(small_matrix::fibonacci::<mul::SchönhageStrassen>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci::<mul::SchönhageStrassen>(100_000), fib);
+        assert_eq!(rev_pow::fibonacci_removed_matrix_abstract::<mul::SchönhageStrassen>(100_000), fib);
     }
 }

@@ -38,23 +38,4 @@ impl UBigMul for ElementarySchool {
         res.truncate(); // the highest part can be 0 in mul, remove it if it is 0
         res
     }
-
-    fn sqr(x: &UBig) -> UBig {
-        let len = x.data.len();
-        if len == 0 {
-            return UBig::zero();
-        }
-
-        // the out buffer and tmp buffer
-        let mut vec = vec![0; 3 * len + 1];
-        let out = vec.as_mut_ptr();
-        let tmp = out.wrapping_add(2 * len);
-
-        unsafe { ElementarySchool::ptr_mul(&x.data, &x.data, out, tmp); }
-
-        vec.truncate(2 * len);
-        let mut res = UBig::from_vec(vec);
-        res.truncate();
-        res
-    }
 }

@@ -21,6 +21,9 @@ static FIBONACCIS: &[(&str, fn(u64) -> UBig)] = &[
     ("matrix_pow_karatsuba_anylen", matrix_pow::fibonacci::<mul::KaratsubaAnyLength>),
     ("small_matrix_karatsuba_anylen", small_matrix::fibonacci::<mul::KaratsubaAnyLength>),
     ("rev_pow_karatsuba_anylen", rev_pow::fibonacci::<mul::KaratsubaAnyLength>),
+    ("matrix_pow_schonhage_strassen", matrix_pow::fibonacci::<mul::SchönhageStrassen>),
+    ("small_matrix_schonhage_strassen", small_matrix::fibonacci::<mul::SchönhageStrassen>),
+    ("rev_pow_schonhage_strassen", rev_pow::fibonacci::<mul::SchönhageStrassen>),
 ];
 
 #[derive(Debug)]
