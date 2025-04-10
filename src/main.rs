@@ -95,6 +95,11 @@ fn main() {
     } else if let Some(method_name) = opts.target_method {
         time_and_report(method_name, opts.n, opts.output_path, opts.output_number);
     }
+
+    //let len = 1 << 24;
+    //print!("timing ubig mul...");
+    //let dur = timing_ubig_mul::<mul::SchönhageStrassen>(len);
+    //println!("timing result: {} secs", dur.as_secs_f64());
 }
 
 fn print_help() {
@@ -179,4 +184,14 @@ fn timing<F: Fn(u64) -> UBig>(fib: &F, n: u64) -> (UBig, Duration) {
 
     let dur = start.elapsed();
     (out, dur)
+}
+
+#[allow(dead_code)]
+fn timing_ubig_mul<M: UBigMul>(len: usize) -> Duration {
+    let x = UBig::from_vec(vec![0; len]);
+    let y = UBig::from_vec(vec![0; len]);
+
+    let start = Instant::now();
+    let _z = black_box(M::mul(black_box(&x), black_box(&y)));
+    start.elapsed()
 }
