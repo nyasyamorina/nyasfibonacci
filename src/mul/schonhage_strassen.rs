@@ -256,56 +256,50 @@ impl SchönhageStrassenOps {
     }
 
     unsafe fn fft(&self, arr: *mut u64, tmp: *mut u64) {
-        self.reindex_fft_eles(arr, tmp);
-        self.radix_2(arr, self.l, self.y << 1, tmp);
+        let reindex = |index: usize| self.fft_reindex(index);
+        self.apply_radix_2(arr, reindex, self.y << 1, tmp);
     }
 
     unsafe fn ifft(&self, arr: *mut u64, tmp: *mut u64) {
-        self.reindex_fft_eles(arr, tmp);
-        self.radix_2(arr, self.l, (self.M - self.y) << 1, tmp);
+        let reindex = |index| index; // fft_reindex(fft_reindex(x)) = x
+        self.apply_radix_2(arr, reindex, (self.M - self.y) << 1, tmp);
     }
 
-    unsafe fn reindex_fft_eles(&self, arr: *mut u64, tmp: *mut u64) {
-        for k in 0..self.L {
-            let l = k.reverse_bits() >> (usize::BITS - self.l);
-            if l > k {
-                let ele_k = self.get_ele(arr, k);
-                let ele_l = self.get_ele(arr, l);
-                self.swap_eles(ele_k, ele_l, tmp);
-            }
-        }
+    fn fft_reindex(&self, index: usize) -> usize {
+        index.reverse_bits() >> (usize::BITS - self.l)
     }
 
-    unsafe fn swap_eles(&self, ele1: *mut u64, ele2: *mut u64, tmp: *mut u64) {
-        ptr::copy_nonoverlapping(ele1, tmp, self.ele_len());
-        ptr::copy_nonoverlapping(ele2, ele1, self.ele_len());
-        ptr::copy_nonoverlapping(tmp, ele2, self.ele_len());
-    }
-
-    unsafe fn radix_2(&self, eles: *mut u64, l: u32, log2_root: usize, tmp: *mut u64) {
-        debug_assert!(l > 0);
-        let half_len = 1 << (l - 1);
-        let low = eles;
-        let high = self.get_ele(eles, half_len);
+    unsafe fn apply_radix_2<F: Fn(usize) -> usize>(&self, arr: *mut u64, reindexing: F, log2_root: usize, tmp: *mut u64) {
         let ring = RingOps { N: self.M };
 
-        if l > 1 {
-            self.radix_2(low, l - 1, log2_root << 1, tmp);
-            self.radix_2(high, l - 1, log2_root << 1, tmp);
-        }
+        let mut log2_root = log2_root << (self.l - 1);
+        let mut group_size = 1usize;
+        let mut n_groups = self.L >> 1;
+        for _layer in 0..self.l {
 
-        let (mut low_k, mut high_k) = (low, high);
-        let mut shift_u64s = 0;
-        for _ in 0..half_len {
+            let mut group_start = 0;
+            for _group in 0..n_groups {
 
-            ring.shl_u64(high_k, shift_u64s, tmp, tmp);
+                let mut shift_u64s = 0;
+                for index in 0..group_size {
 
-            ring.sub(low_k, tmp, high_k);
-            ring.add(low_k, tmp, low_k);
+                    let l_index = group_start + index;
+                    let h_index = l_index + group_size;
 
-            low_k = low_k.wrapping_add(self.ele_len());
-            high_k = high_k.wrapping_add(self.ele_len());
-            shift_u64s += log2_root;
+                    let l_ele = self.get_ele(arr, reindexing(l_index));
+                    let h_ele = self.get_ele(arr, reindexing(h_index));
+
+                    ring.shl_u64(h_ele, shift_u64s, tmp, tmp);
+                    ring.sub(l_ele, tmp, h_ele);
+                    ring.add(l_ele, tmp, l_ele);
+
+                    shift_u64s += log2_root;
+                }
+                group_start += group_size << 1;
+            }
+            group_size <<= 1;
+            n_groups >>= 1;
+            log2_root >>= 1;
         }
     }
 

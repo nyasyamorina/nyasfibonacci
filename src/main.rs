@@ -96,10 +96,10 @@ fn main() {
         time_and_report(method_name, opts.n, opts.output_path, opts.output_number);
     }
 
-    //let len = 1 << 24;
-    //print!("timing ubig mul...");
-    //let dur = timing_ubig_mul::<mul::SchönhageStrassen>(len);
-    //println!("timing result: {} secs", dur.as_secs_f64());
+    /* let len = 1 << 24;
+    print!("timing ubig mul...");
+    let dur = timing_ubig_mul::<mul::SchönhageStrassen>(len);
+    println!("timing result: {} secs", dur.as_secs_f64()); */
 }
 
 fn print_help() {
